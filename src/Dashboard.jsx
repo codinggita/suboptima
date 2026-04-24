@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   CreditCard, 
@@ -28,22 +29,22 @@ const Dashboard = () => {
         </div>
         
         <nav className="nav-menu">
-          <a href="#" className="nav-item active">
+          <Link to="/dashboard" className="nav-item active">
             <LayoutDashboard size={18} />
             Dashboard
-          </a>
-          <a href="#" className="nav-item">
+          </Link>
+          <Link to="/subscriptions" className="nav-item">
             <CreditCard size={18} />
             Subscriptions
-          </a>
-          <a href="#" className="nav-item">
+          </Link>
+          <Link to="/insights" className="nav-item">
             <LineChart size={18} />
             Insights
-          </a>
-          <a href="#" className="nav-item">
+          </Link>
+          <Link to="/settings" className="nav-item">
             <Settings size={18} />
             Settings
-          </a>
+          </Link>
         </nav>
 
         <button className="optimize-btn">
