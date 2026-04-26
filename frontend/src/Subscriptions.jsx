@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -11,9 +10,8 @@ import {
   Plus, 
   Download,
   Zap,
-  TrendingUp,
-  MoreVertical,
   Filter,
+  MoreVertical,
   ChevronLeft,
   ChevronRight,
   Landmark,
@@ -150,10 +148,10 @@ const Subscriptions = () => {
               <Download size={14} />
               Export CSV
             </button>
-            <button className="btn-primary">
+            <Link to="/subscriptions/add" className="btn-primary" style={{textDecoration: 'none'}}>
               <Plus size={14} />
               Add Subscription
-            </button>
+            </Link>
           </div>
         </div>
 
