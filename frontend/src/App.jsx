@@ -4,6 +4,7 @@ import Dashboard from './Dashboard';
 import Subscriptions from './Subscriptions';
 import AddSubscription from './AddSubscription';
 import Insights from './Insights';
+import Settings from './Settings';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/subscriptions/add" element={<AddSubscription />} />
         <Route path="/insights" element={<Insights />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );
