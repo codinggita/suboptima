@@ -1,4 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import dashboardService from './services/dashboardService';
 import { 
   LayoutDashboard, 
   CreditCard, 
@@ -14,10 +16,37 @@ import {
   TrendingDown,
   AlertCircle,
   Clock,
-  Briefcase
+  Briefcase,
+  Loader2
 } from 'lucide-react';
 
 const Dashboard = () => {
+  const [stats, setStats] = useState({
+    totalSubscriptions: 0,
+    totalMonthlySpend: 0,
+    potentialWaste: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await dashboardService.getDashboardData();
+      setStats(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard metrics.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="dashboard-container">
       {/* Sidebar */}
@@ -88,10 +117,6 @@ const Dashboard = () => {
               <Settings size={18} />
             </div>
             <div className="user-profile">
-              <div className="user-info">
-                <span className="name">Alex Morgan</span>
-                <span className="role">Pro Member</span>
-              </div>
               <div className="avatar">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Avatar" />
               </div>
@@ -101,14 +126,20 @@ const Dashboard = () => {
 
         <div className="dashboard-actions">
           <div className="welcome-msg">
-            <h1>Welcome back, Alex</h1>
-            <p>Here is what's happening with your subscriptions today.</p>
+            <h1>Analytics Overview</h1>
+            <p>Real-time insights into your organization's SaaS health.</p>
           </div>
-          <button className="insights-btn">
+          <button className="insights-btn" onClick={fetchDashboardData}>
             <Zap size={16} fill="white" />
-            Generate AI Insights
+            Refresh Stats
           </button>
         </div>
+
+        {error && (
+          <div style={{ margin: '0 2rem 1.5rem', padding: '1rem', background: '#fee2e2', color: '#dc2626', borderRadius: '0.75rem', fontSize: '0.875rem' }}>
+            {error}
+          </div>
+        )}
 
         {/* Stats Row */}
         <div className="summary-row">
@@ -117,10 +148,12 @@ const Dashboard = () => {
               <span className="stat-label">Total Monthly Spend</span>
               <div className="stat-icon"><CreditCard size={16} /></div>
             </div>
-            <div className="stat-value">$1,240</div>
+            {loading ? <Loader2 className="animate-spin" size={20} color="#94a3b8" /> : (
+              <div className="stat-value">${stats.totalMonthlySpend.toLocaleString()}</div>
+            )}
             <div className="stat-trend down">
               <TrendingDown size={14} />
-              2.4% from last month
+              Calculated monthly burn
             </div>
           </div>
 
@@ -129,9 +162,11 @@ const Dashboard = () => {
               <span className="stat-label">Active Subscriptions</span>
               <div className="stat-icon"><Clock size={16} /></div>
             </div>
-            <div className="stat-value">18</div>
+            {loading ? <Loader2 className="animate-spin" size={20} color="#94a3b8" /> : (
+              <div className="stat-value">{stats.totalSubscriptions}</div>
+            )}
             <div className="stat-trend up">
-              + 2 new this week
+              Tracking all services
             </div>
           </div>
 
@@ -140,9 +175,11 @@ const Dashboard = () => {
               <span className="stat-label">Waste Detected</span>
               <div className="stat-icon"><AlertCircle size={16} /></div>
             </div>
-            <div className="stat-value">$320</div>
-            <div className="stat-trend down" style={{color: '#ef4444'}}>
-              High Priority Alert
+            {loading ? <Loader2 className="animate-spin" size={20} color="#94a3b8" /> : (
+              <div className="stat-value">${stats.potentialWaste.toLocaleString()}</div>
+            )}
+            <div className="stat-trend down" style={{color: stats.potentialWaste > 0 ? '#ef4444' : '#10b981'}}>
+              {stats.potentialWaste > 0 ? 'Action Required' : 'Optimal Efficiency'}
             </div>
           </div>
 
@@ -184,44 +221,37 @@ const Dashboard = () => {
           <div className="section-card">
             <div className="section-title">
               Action Required
-              <span style={{fontSize: '0.7rem', background: '#fee2e2', color: '#ef4444', padding: '2px 8px', borderRadius: '4px'}}>2 ALERTS</span>
+              <span style={{fontSize: '0.7rem', background: '#fee2e2', color: '#ef4444', padding: '2px 8px', borderRadius: '4px'}}>ALERTS</span>
             </div>
             
-            <div className="alert-item">
-              <div className="alt-icon-bg">
-                <Clock size={20} />
+            {stats.potentialWaste > 0 ? (
+              <div className="alert-item">
+                <div className="alt-icon-bg">
+                  <AlertCircle size={20} />
+                </div>
+                <div className="alert-content">
+                  <h4>Underutilized Services</h4>
+                  <p>We've detected services that haven't been used in 14+ days.</p>
+                  <Link to="/subscriptions" className="alert-action">Review & Cancel</Link>
+                </div>
+                <div className="alert-meta">
+                  <span style={{ color: '#ef4444' }}>-${stats.potentialWaste}</span>
+                </div>
               </div>
-              <div className="alert-content">
-                <h4>3 Inactive Subscriptions</h4>
-                <p>Slack, Loom, and Framer haven't been used in 30+ days.</p>
-                <a href="#" className="alert-action">Manage Now</a>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                <TrendingUp size={32} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                <p>Great job! No waste detected in your current stack.</p>
               </div>
-              <div className="alert-meta">
-                <span>-$84.00</span>
-              </div>
-            </div>
-
-            <div className="alert-item">
-              <div className="alt-icon-bg blue">
-                <Briefcase size={20} />
-              </div>
-              <div className="alert-content">
-                <h4>New Waste Found</h4>
-                <p>Duplicate licenses detected for Adobe Creative Cloud.</p>
-                <a href="#" className="alert-action">Resolve</a>
-              </div>
-              <div className="alert-meta">
-                <span>-$236.00</span>
-              </div>
-            </div>
+            )}
 
             <div className="quick-actions-section" style={{marginTop: '2rem'}}>
                <p style={{fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8', marginBottom: '1rem'}}>Quick Actions</p>
                <div className="quick-actions-row">
-                 <div className="action-card">
+                 <Link to="/subscriptions/add" className="action-card" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <Plus size={24} color="#94a3b8" />
                     <span>Add New</span>
-                 </div>
+                 </Link>
                  <div className="action-card">
                     <Download size={24} color="#94a3b8" />
                     <span>Export CSV</span>
@@ -229,49 +259,18 @@ const Dashboard = () => {
                </div>
             </div>
           </div>
-
-          {/* Bottom Row */}
-          <div className="section-card">
-            <div className="section-title">Spending by Category</div>
-            <div className="category-content">
-               <div className="chart-square">
-                 <div className="chart-inner-text">
-                    <div style={{fontSize: '0.9rem', fontWeight: 700}}>$1,240</div>
-                 </div>
-               </div>
-               <div className="legend-list">
-                 <div className="legend-item">
-                    <div className="legend-label">
-                      <div className="dot" style={{background: '#5c4df3'}}></div>
-                      SaaS
-                    </div>
-                    <span style={{fontWeight: 700}}>60%</span>
-                 </div>
-                 <div className="legend-item">
-                    <div className="legend-label">
-                      <div className="dot" style={{background: '#3b82f6'}}></div>
-                      Infrastructure
-                    </div>
-                    <span style={{fontWeight: 700}}>25%</span>
-                 </div>
-                 <div className="legend-item">
-                    <div className="legend-label">
-                      <div className="dot" style={{background: '#10b981'}}></div>
-                      Marketing
-                    </div>
-                    <span style={{fontWeight: 700}}>15%</span>
-                 </div>
-               </div>
-            </div>
-          </div>
-
-          <div className="upgrade-card">
-            <h3>Upgrade to Enterprise</h3>
-            <p>Unlock advanced multi-team optimization and automated seat management.</p>
-            <button className="view-plans-btn">View Plans</button>
-          </div>
         </div>
       </main>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
