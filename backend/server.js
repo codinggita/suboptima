@@ -2,13 +2,12 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
 
 // Load env vars
 dotenv.config();
 
 // Connect to database
-// Note: We'll wrap this in a check so the server can still run for health checks 
-// even if DB connection fails (optional, but good for initial setup)
 connectDB();
 
 const app = express();
@@ -18,6 +17,9 @@ app.use(express.json());
 
 // Enable CORS
 app.use(cors());
+
+// Mount routes
+app.use('/api/auth', authRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
