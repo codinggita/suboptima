@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import insightService from './services/insightService';
+import aiService from './services/aiService';
 import { 
   LayoutDashboard, 
   CreditCard, 
@@ -18,29 +19,52 @@ import {
   LayoutGrid,
   Loader2,
   AlertTriangle,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 
 const Insights = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // AI Insights State
+  const [aiInsights, setAiInsights] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
 
   useEffect(() => {
-    fetchInsights();
+    fetchAllData();
   }, []);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    await Promise.all([fetchInsights(), fetchAIInsights()]);
+    setLoading(false);
+  };
 
   const fetchInsights = async () => {
     try {
-      setLoading(true);
       const response = await insightService.getInsights();
       setData(response.data);
       setError(null);
     } catch (err) {
       console.error('Error fetching insights:', err);
-      setError('Failed to load insights. Please try again later.');
+      setError('Failed to load basic insights.');
+    }
+  };
+
+  const fetchAIInsights = async () => {
+    try {
+      setAiLoading(true);
+      setAiError(null);
+      const text = await aiService.getAIInsights();
+      setAiInsights(text);
+    } catch (err) {
+      console.error('Error fetching AI insights:', err);
+      setAiError('AI recommendations are currently unavailable.');
     } finally {
-      setLoading(false);
+      setAiLoading(false);
     }
   };
 
@@ -147,20 +171,20 @@ const Insights = () => {
               <h1>AI Optimization Insights</h1>
               <p>Automated analysis of your SaaS spending and usage</p>
             </div>
-            <button className="regenerate-btn" onClick={fetchInsights} disabled={loading}>
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            <button className="regenerate-btn" onClick={fetchAllData} disabled={loading || aiLoading}>
+              {(loading || aiLoading) ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
               Regenerate Analysis
             </button>
           </div>
 
-          {error && (
+          {(error || aiError) && (
             <div style={{ padding: '1rem', background: '#fee2e2', color: '#dc2626', borderRadius: '12px', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <AlertTriangle size={18} />
-              {error}
+              {error || aiError}
             </div>
           )}
 
-          {loading ? (
+          {loading && !data ? (
             <div style={{ textAlign: 'center', padding: '5rem' }}>
               <Loader2 size={48} className="animate-spin" color="#5c4df3" style={{ margin: '0 auto 1.5rem' }} />
               <h3>Analyzing your stack...</h3>
@@ -234,6 +258,56 @@ const Insights = () => {
                       <span>{data.subscriptions.length} APPS ANALYZED</span>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* AI Smart Recommendations Section */}
+              <div className="ai-insights-section" style={{ marginBottom: '2.5rem' }}>
+                <div className="section-header" style={{ marginBottom: '1rem' }}>
+                  <Sparkles size={20} color="#5c4df3" />
+                  <h2>Smart Recommendations</h2>
+                  <span className="ai-badge">AI POWERED</span>
+                </div>
+                
+                <div className="ai-card" style={{ 
+                  background: 'white', 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: '16px', 
+                  padding: '1.5rem',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div className="ai-card-glow"></div>
+                  {aiLoading ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
+                      <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto 1rem', color: '#5c4df3' }} />
+                      <p>Consulting Gemini AI for advanced optimizations...</p>
+                    </div>
+                  ) : aiError ? (
+                    <div style={{ color: '#64748b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Info size={16} />
+                      {aiError}
+                    </div>
+                  ) : (
+                    <div className="ai-text-content">
+                      {aiInsights.split('\n').map((line, i) => (
+                        <p key={i} style={{ 
+                          fontSize: '0.95rem', 
+                          color: '#475569', 
+                          lineHeight: '1.6', 
+                          marginBottom: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem'
+                        }}>
+                          {line.trim().startsWith('-') || line.trim().startsWith('*') ? (
+                            <span style={{ color: '#5c4df3', fontWeight: 900 }}>•</span>
+                          ) : null}
+                          {line.replace(/^[-*]\s*/, '')}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -318,6 +392,27 @@ const Insights = () => {
         }
         .animate-spin {
           animation: spin 1s linear infinite;
+        }
+
+        .ai-badge {
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: white;
+          background: linear-gradient(135deg, #5c4df3 0%, #3b2bc4 100%);
+          padding: 0.2rem 0.6rem;
+          border-radius: 4px;
+          margin-left: 0.5rem;
+          letter-spacing: 0.5px;
+        }
+
+        .ai-card-glow {
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle at center, rgba(92, 77, 243, 0.03) 0%, transparent 50%);
+          pointer-events: none;
         }
 
         .insights-content { padding: 2rem; max-width: 1200px; margin: 0 auto; }
