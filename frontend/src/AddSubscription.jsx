@@ -1,12 +1,59 @@
+import React, { useState } from 'react';
 import Subscriptions from './Subscriptions';
-import { X, Upload, ChevronDown, ArrowRight } from 'lucide-react';
+import { X, Upload, ChevronDown, ArrowRight, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import subscriptionService from './services/subscriptionService';
 
 const AddSubscription = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    category: '',
+    detail: '',
+    cost: '',
+    renewalDate: ''
+  });
+  const [error, setError] = useState(null);
+
+  const { name, category, detail, cost, renewalDate } = formData;
 
   const handleClose = () => {
     navigate('/subscriptions');
+  };
+
+  const onChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Validate cost is a number
+      const numericCost = parseFloat(cost);
+      if (isNaN(numericCost)) {
+        throw new Error('Cost must be a valid number');
+      }
+
+      const dataToSubmit = {
+        name,
+        category,
+        detail,
+        cost: numericCost,
+        renewalDate: new Date(renewalDate)
+      };
+
+      await subscriptionService.createSubscription(dataToSubmit);
+      navigate('/subscriptions');
+    } catch (err) {
+      console.error('Error creating subscription:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to add subscription');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,89 +75,128 @@ const AddSubscription = () => {
             <p>Connect your services to start optimizing your bills.</p>
           </div>
 
-          <div className="progress-section">
-            <div className="progress-track">
-              <div className="progress-fill"></div>
+          {error && (
+            <div style={{ 
+              background: '#fee2e2', 
+              color: '#dc2626', 
+              padding: '0.75rem', 
+              borderRadius: '8px', 
+              marginBottom: '1.5rem',
+              fontSize: '0.85rem',
+              border: '1px solid #fecaca'
+            }}>
+              {error}
             </div>
-            <span className="step-text">Step 1 of 3: Service Details</span>
-          </div>
+          )}
 
-          <div className="form-row">
+          <form onSubmit={handleSubmit}>
+            <div className="form-row">
+              <div className="form-field">
+                <label htmlFor="name">Subscription Name</label>
+                <input 
+                  id="name"
+                  type="text" 
+                  className="form-input" 
+                  placeholder="e.g. Netflix" 
+                  value={name}
+                  onChange={onChange}
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="category">Category</label>
+                <div className="form-select-wrapper">
+                  <select 
+                    id="category" 
+                    className="form-input form-select" 
+                    value={category}
+                    onChange={onChange}
+                    required
+                  >
+                    <option value="" disabled>Select category</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="streaming">Streaming</option>
+                    <option value="software">Software & SaaS</option>
+                    <option value="infrastructure">Cloud</option>
+                    <option value="utilities">Utilities</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <ChevronDown className="select-icon" size={16} />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-field">
+                <label htmlFor="cost">Monthly Cost ($)</label>
+                <input 
+                  id="cost"
+                  type="number" 
+                  step="0.01"
+                  className="form-input" 
+                  placeholder="0.00" 
+                  value={cost}
+                  onChange={onChange}
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="renewalDate">Renewal Date</label>
+                <input 
+                  id="renewalDate"
+                  type="date" 
+                  className="form-input" 
+                  value={renewalDate}
+                  onChange={onChange}
+                  required
+                />
+              </div>
+            </div>
+
             <div className="form-field">
-              <label htmlFor="sub-name">Subscription Name</label>
+              <label htmlFor="detail">Plan / Licenses Details</label>
               <input 
-                id="sub-name"
+                id="detail"
                 type="text" 
                 className="form-input" 
-                placeholder="e.g. Netflix" 
+                placeholder="e.g. Premium Plan, 5 Licenses" 
+                value={detail}
+                onChange={onChange}
+                required
               />
             </div>
 
-            <div className="form-field">
-              <label htmlFor="category">Category</label>
-              <div className="form-select-wrapper">
-                <select id="category" className="form-input form-select" defaultValue="">
-                  <option value="" disabled>Select category</option>
-                  <option value="entertainment">Entertainment</option>
-                  <option value="streaming">Streaming</option>
-                  <option value="software">Software & SaaS</option>
-                  <option value="infrastructure">Cloud</option>
-                  <option value="utilities">Utilities</option>
-                </select>
-                <ChevronDown className="select-icon" size={16} />
-              </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-cancel" onClick={handleClose}>Back to List</button>
+              <button type="submit" className="btn-next" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    Add Subscription
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
             </div>
-          </div>
-
-          <div className="form-field">
-            <label>Service Logo</label>
-            <div className="upload-area">
-              <div style={{ 
-                background: 'rgba(92, 77, 243, 0.1)', 
-                padding: '0.75rem', 
-                borderRadius: '12px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                marginBottom: '0.25rem'
-              }}>
-                <Upload size={22} color="var(--primary)" strokeWidth={2.5} />
-              </div>
-              <p>Click to upload or drag logo</p>
-              <span>PNG, SVG (max 5MB)</span>
-            </div>
-          </div>
-
-          <div className="quick-picks">
-            <span className="quick-picks-label">POPULAR SERVICES</span>
-            <div className="quick-picks-grid">
-              <div className="quick-pick-item" style={{ background: '#E50914' }} title="Netflix">
-                <span style={{ color: 'white', fontWeight: 900, fontSize: '1rem' }}>N</span>
-              </div>
-              <div className="quick-pick-item" style={{ background: '#1DB954' }} title="Spotify">
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'black', display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: '12px', height: '1.5px', background: '#1DB954', borderRadius: '10px', transform: 'rotate(-5deg)' }}></div>
-                    <div style={{ width: '10px', height: '1.5px', background: '#1DB954', borderRadius: '10px', transform: 'rotate(-5deg)' }}></div>
-                </div>
-              </div>
-              <div className="quick-pick-item" style={{ background: '#00A8E1' }} title="Prime Video">
-                 <div style={{ width: '16px', height: '16px', border: '2.5px solid white', borderRadius: '50%', borderBottomColor: 'transparent' }}></div>
-              </div>
-              <div className="quick-pick-item" style={{ background: '#02241e', position: 'relative' }} title="Other">
-                 <div style={{ width: '0', height: '0', borderLeft: '9px solid transparent', borderRight: '9px solid transparent', borderBottom: '14px solid #00FF9C' }}></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="modal-footer">
-            <button className="btn-cancel" onClick={handleClose}>Back to List</button>
-            <button className="btn-next">
-              Continue
-              <ArrowRight size={18} />
-            </button>
-          </div>
+          </form>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
