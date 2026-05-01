@@ -29,7 +29,7 @@ const Insights = () => {
   const [error, setError] = useState(null);
   
   // AI Insights State
-  const [aiInsights, setAiInsights] = useState("");
+  const [aiInsights, setAiInsights] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
 
@@ -39,18 +39,22 @@ const Insights = () => {
 
   const fetchAllData = async () => {
     setLoading(true);
-    await Promise.all([fetchInsights(), fetchAIInsights()]);
+    await fetchInsights();
+    // We don't auto-fetch AI here anymore to save quota
     setLoading(false);
   };
 
   const fetchInsights = async () => {
     try {
+      setLoading(true);
       const response = await insightService.getInsights();
       setData(response.data);
       setError(null);
     } catch (err) {
       console.error('Error fetching insights:', err);
-      setError('Failed to load basic insights.');
+      setError('Failed to load insights. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -283,12 +287,7 @@ const Insights = () => {
                       <Loader2 size={32} className="animate-spin" style={{ margin: '0 auto 1rem', color: '#5c4df3' }} />
                       <p>Consulting Gemini AI for advanced optimizations...</p>
                     </div>
-                  ) : aiError ? (
-                    <div style={{ color: '#64748b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Info size={16} />
-                      {aiError}
-                    </div>
-                  ) : (
+                  ) : aiInsights ? (
                     <div className="ai-text-content">
                       {aiInsights.split('\n').map((line, i) => (
                         <p key={i} style={{ 
@@ -306,6 +305,42 @@ const Insights = () => {
                           {line.replace(/^[-*]\s*/, '')}
                         </p>
                       ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '1.5rem' }}>
+                      <div style={{ width: '48px', height: '48px', background: '#f0efff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#5c4df3' }}>
+                        <Sparkles size={24} />
+                      </div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Unlock AI-Powered Savings</h3>
+                      <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.5rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
+                        Our Gemini AI can scan your entire subscription stack to find hidden overlaps, redundant services, and better pricing plans.
+                      </p>
+                      <button 
+                        onClick={fetchAIInsights} 
+                        className="btn-primary" 
+                        style={{ 
+                          background: '#5c4df3', 
+                          border: 'none', 
+                          padding: '0.75rem 1.5rem', 
+                          borderRadius: '12px', 
+                          color: 'white', 
+                          fontWeight: 600, 
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          boxShadow: '0 4px 12px rgba(92, 77, 243, 0.2)'
+                        }}
+                      >
+                        <Sparkles size={16} />
+                        Generate Smart Recommendations
+                      </button>
+                    </div>
+                  )}
+                  {aiError && !aiLoading && (
+                    <div style={{ marginTop: '1rem', color: '#ef4444', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                      <AlertTriangle size={14} />
+                      {aiError}
                     </div>
                   )}
                 </div>
