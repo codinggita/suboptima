@@ -25,6 +25,15 @@ const subscriptionSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Please add a renewal date']
   },
+  billingCycle: {
+    type: String,
+    enum: ['monthly', 'yearly'],
+    default: 'monthly'
+  },
+  lastUsedDate: {
+    type: Date,
+    default: Date.now
+  },
   status: {
     type: String,
     enum: ['Healthy', 'Warning', 'Waste'],

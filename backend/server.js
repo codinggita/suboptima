@@ -4,6 +4,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import subscriptionRoutes from './routes/subscriptionRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(cors());
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
