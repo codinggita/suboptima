@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -22,6 +22,20 @@ import {
 } from 'lucide-react';
 
 const Settings = () => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  };
   return (
     <div className="dashboard-container">
       {/* Sidebar */}
@@ -53,6 +67,26 @@ const Settings = () => {
             <SettingsIcon size={18} />
             Settings
           </Link>
+          <button 
+            className="nav-item" 
+            onClick={handleLogout}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              width: '100%', 
+              textAlign: 'left', 
+              cursor: 'pointer',
+              marginTop: 'auto',
+              color: '#ef4444',
+              padding: '0.75rem 1rem',
+              fontSize: '0.9rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Logout
+            </div>
+          </button>
         </nav>
 
         <button className="optimize-btn">
@@ -70,13 +104,13 @@ const Settings = () => {
           
           <div className="header-right">
             <div className="header-icons">
-              <Bell size={18} />
-              <HelpCircle size={18} />
-              <SettingsIcon size={18} />
+              <Link to="/settings" className="header-icon-btn"><Bell size={18} /></Link>
+              <Link to="/settings" className="header-icon-btn"><HelpCircle size={18} /></Link>
+              <Link to="/settings" className="header-icon-btn"><SettingsIcon size={18} /></Link>
             </div>
             <div className="user-profile">
-              <div className="avatar">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Avatar" />
+              <div className="avatar-initial">
+                {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
               </div>
             </div>
           </div>
@@ -106,11 +140,8 @@ const Settings = () => {
                 
                 <div className="profile-edit-grid">
                   <div className="avatar-edit">
-                    <div className="avatar-large">
-                      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Avatar" />
-                      <button className="edit-overlay">
-                        <Edit2 size={12} color="white" />
-                      </button>
+                    <div className="avatar-initial" style={{ width: '100px', height: '100px', fontSize: '2.5rem' }}>
+                      {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
                     </div>
                   </div>
                   
@@ -118,11 +149,11 @@ const Settings = () => {
                     <div className="form-grid">
                       <div className="field-group">
                         <label>Full Name</label>
-                        <input type="text" defaultValue="Alexander Thompson" />
+                        <input type="text" defaultValue={user?.name || ""} placeholder="Your Name" />
                       </div>
                       <div className="field-group">
                         <label>Email Address</label>
-                        <input type="email" defaultValue="alex.thompson@suboptima.ai" />
+                        <input type="email" defaultValue={user?.email || ""} placeholder="your@email.com" />
                       </div>
                       <div className="field-group">
                         <label>Role</label>
@@ -196,7 +227,7 @@ const Settings = () => {
               <div className="logout-card">
                 <h3 className="danger-text">Logout section</h3>
                 <p>Are you sure you want to end your current session?</p>
-                <button className="logout-btn">
+                <button className="logout-btn" onClick={handleLogout}>
                   <LogOut size={16} />
                   Logout
                 </button>

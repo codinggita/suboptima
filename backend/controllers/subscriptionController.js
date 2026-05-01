@@ -17,6 +17,31 @@ export const getSubscriptions = async (req, res) => {
   }
 };
 
+// @desc    Get single subscription
+// @route   GET /api/subscriptions/:id
+// @access  Private
+export const getSubscription = async (req, res) => {
+  try {
+    const subscription = await Subscription.findById(req.params.id);
+
+    if (!subscription) {
+      return res.status(404).json({ message: 'Subscription not found' });
+    }
+
+    // Make sure user owns subscription
+    if (subscription.user.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: subscription
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Create new subscription
 // @route   POST /api/subscriptions
 // @access  Private

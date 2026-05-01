@@ -32,8 +32,13 @@ const Insights = () => {
   const [aiInsights, setAiInsights] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
     fetchAllData();
   }, []);
 
@@ -122,6 +127,7 @@ const Insights = () => {
             className="nav-item" 
             onClick={() => {
               localStorage.removeItem('token');
+              localStorage.removeItem('user');
               window.location.href = '/';
             }}
             style={{ 
@@ -157,13 +163,13 @@ const Insights = () => {
           
           <div className="header-right">
             <div className="header-icons">
-              <Bell size={18} />
-              <HelpCircle size={18} />
-              <Settings size={18} />
+              <Link to="/settings" className="header-icon-btn"><Bell size={18} /></Link>
+              <Link to="/settings" className="header-icon-btn"><HelpCircle size={18} /></Link>
+              <Link to="/settings" className="header-icon-btn"><Settings size={18} /></Link>
             </div>
             <div className="user-profile">
-              <div className="avatar">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Avatar" />
+              <div className="avatar-initial">
+                {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
               </div>
             </div>
           </div>

@@ -1480,3 +1480,37 @@ input:focus {
     margin-bottom: 1.5rem;
   }
 }
+/* User Profile Initial Avatar */
+.avatar-initial {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 10px rgba(92, 77, 243, 0.2);
+  user-select: none;
+}
+
+.header-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.header-icon-btn:hover {
+  background: #f1f5f9;
+  color: var(--primary);
+}

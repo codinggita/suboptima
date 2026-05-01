@@ -6,6 +6,11 @@ const subscriptionService = {
     return response.data;
   },
 
+  getSubscriptionById: async (id) => {
+    const response = await api.get(`/subscriptions/${id}`);
+    return response.data;
+  },
+
   createSubscription: async (data) => {
     const response = await api.post('/subscriptions', data);
     return response.data;
