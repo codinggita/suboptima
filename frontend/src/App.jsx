@@ -3,6 +3,7 @@ import Login from './Login';
 import Dashboard from './Dashboard';
 import Subscriptions from './Subscriptions';
 import AddSubscription from './AddSubscription';
+import Insights from './Insights';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/subscriptions/add" element={<AddSubscription />} />
+        <Route path="/insights" element={<Insights />} />
       </Routes>
     </Router>
   );
