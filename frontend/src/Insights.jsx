@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import insightService from './services/insightService';
 import { 
   LayoutDashboard, 
   CreditCard, 
@@ -14,38 +15,49 @@ import {
   CheckCircle2,
   Cpu,
   Plus,
-  Video,
   LayoutGrid,
-  Activity
+  Loader2,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 
 const Insights = () => {
-  const recommendations = [
-    {
-      id: 1,
-      app: 'Figma (Design Team)',
-      plan: 'Enterprise Workspace',
-      savings: '-$45.00',
-      reason: '"3 seats haven\'t logged in for 30 days. Action: Downgrade or Remove Seats"',
-      icon: <div className="app-icon figma-bg"><LayoutGrid size={18} color="white" /></div>
-    },
-    {
-      id: 2,
-      app: 'Slack (Marketing)',
-      plan: 'Business+ Plan',
-      savings: '-$120.00',
-      reason: '"Redundant channel archiving suggested. 12 external guests are no longer active in shared channels."',
-      icon: <div className="app-icon slack-bg"><Activity size={18} color="white" /></div>
-    },
-    {
-      id: 3,
-      app: 'Zoom Video',
-      plan: 'Pro Plan',
-      savings: '-$250.00',
-      reason: '"Duplicate billing detected. Individual pro licenses cost 15% more than the newly available Team Tier."',
-      icon: <div className="app-icon zoom-bg"><Video size={18} color="white" /></div>
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchInsights();
+  }, []);
+
+  const fetchInsights = async () => {
+    try {
+      setLoading(true);
+      const response = await insightService.getInsights();
+      setData(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching insights:', err);
+      setError('Failed to load insights. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case 'waste': return { color: '#ef4444', bg: '#fee2e2', border: '#fecaca', label: 'WASTE DETECTED' };
+      case 'warning': return { color: '#f59e0b', bg: '#fef3c7', border: '#fde68a', label: 'RENEWAL SOON' };
+      default: return { color: '#10b981', bg: '#ecfdf5', border: '#d1fae5', label: 'HEALTHY' };
+    }
+  };
+
+  const calculateTotalSavings = () => {
+    if (!data) return 0;
+    return data.subscriptions
+      .filter(s => s.status === 'waste')
+      .reduce((acc, curr) => acc + (curr.cost || 0), 0);
+  };
 
   return (
     <div className="dashboard-container">
@@ -78,6 +90,28 @@ const Insights = () => {
             <Settings size={18} />
             Settings
           </Link>
+          <button 
+            className="nav-item" 
+            onClick={() => {
+              localStorage.removeItem('token');
+              window.location.href = '/';
+            }}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              width: '100%', 
+              textAlign: 'left', 
+              cursor: 'pointer',
+              marginTop: 'auto',
+              color: '#ef4444',
+              padding: '0.75rem 1rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Logout
+            </div>
+          </button>
         </nav>
 
         <button className="optimize-btn">
@@ -111,533 +145,231 @@ const Insights = () => {
           <div className="insights-header-row">
             <div className="title-section">
               <h1>AI Optimization Insights</h1>
-              <p>Based on usage patterns from the last 30 days</p>
+              <p>Automated analysis of your SaaS spending and usage</p>
             </div>
-            <button className="regenerate-btn">
-              <RefreshCw size={16} />
+            <button className="regenerate-btn" onClick={fetchInsights} disabled={loading}>
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
               Regenerate Analysis
             </button>
           </div>
 
-          <div className="insights-summary-grid">
-            <div className="efficiency-card">
-              <div className="card-badge">
-                <Target size={12} />
-                ESTIMATED EFFICIENCY
-              </div>
-              <div className="savings-main">
-                <p>Potential Monthly Savings</p>
-                <div className="amount">
-                  <span className="currency">$</span>
-                  <span className="value">415</span>
-                  <span className="decimals">.00</span>
-                </div>
-              </div>
-              <p className="card-footer-text">
-                We identified 7 redundant licenses and 2 under-utilized enterprise tiers across your tech stack.
-              </p>
+          {error && (
+            <div style={{ padding: '1rem', background: '#fee2e2', color: '#dc2626', borderRadius: '12px', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertTriangle size={18} />
+              {error}
             </div>
+          )}
 
-            <div className="status-card">
-              <div className="status-header">
-                <div className="status-icon-bg">
-                  <Cpu size={24} color="#5c4df3" />
-                </div>
-                <div className="status-info">
-                  <div className="status-label-row">
-                    <h3>Analysis Status</h3>
-                    <span className="live-badge">LIVE OPTIMIZATION</span>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '5rem' }}>
+              <Loader2 size={48} className="animate-spin" color="#5c4df3" style={{ margin: '0 auto 1.5rem' }} />
+              <h3>Analyzing your stack...</h3>
+              <p style={{ color: '#64748b' }}>Our AI agent is scanning for waste and renewal alerts.</p>
+            </div>
+          ) : !data || data.subscriptions.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '5rem', background: 'white', borderRadius: '24px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ width: '80px', height: '80px', background: '#f8fafc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: '#94a3b8' }}>
+                <LayoutGrid size={40} />
+              </div>
+              <h3>No data to analyze</h3>
+              <p style={{ color: '#64748b', marginBottom: '2rem' }}>Add some subscriptions to see AI-powered optimization insights.</p>
+              <Link to="/subscriptions/add" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', padding: '0.75rem 1.5rem', borderRadius: '12px', background: '#5c4df3', color: 'white', fontWeight: 600 }}>
+                <Plus size={18} style={{ marginRight: '0.5rem' }} />
+                Connect Your First App
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="insights-summary-grid">
+                <div className="efficiency-card">
+                  <div className="card-badge">
+                    <Target size={12} />
+                    ESTIMATED EFFICIENCY
                   </div>
-                  <p>Our AI agent has successfully scanned 14 connected SaaS platforms. Efficiency score improved by <span className="highlight">12%</span> today.</p>
+                  <div className="savings-main">
+                    <p>Potential Monthly Savings</p>
+                    <div className="amount">
+                      <span className="currency">$</span>
+                      <span className="value">{calculateTotalSavings()}</span>
+                      <span className="decimals">.00</span>
+                    </div>
+                  </div>
+                  <p className="card-footer-text">
+                    We identified {data.summary.totalWasteCount} critical waste zones and {data.summary.totalWarningCount} upcoming renewals that need attention.
+                  </p>
                 </div>
-              </div>
-              <div className="progress-section">
-                <div className="progress-bar-container">
-                  <div className="progress-bar-fill" style={{width: '84%'}}></div>
-                </div>
-                <div className="progress-meta">
-                  <span>SYSTEM SCAN: 84% COMPLETE</span>
-                  <span>14/14 APPS CONNECTED</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="recommendations-section">
-            <div className="section-header">
-              <CheckCircle2 size={20} color="#5c4df3" />
-              <h2>Actionable Recommendations</h2>
-            </div>
-
-            <div className="recommendations-grid">
-              {recommendations.map((rec) => (
-                <div key={rec.id} className="recommendation-card">
-                  <div className="card-top">
-                    <div className="app-info">
-                      {rec.icon}
-                      <div>
-                        <h4>{rec.app}</h4>
-                        <span>{rec.plan}</span>
+                <div className="status-card">
+                  <div className="status-header">
+                    <div className="status-icon-bg">
+                      <Cpu size={24} color="#5c4df3" />
+                    </div>
+                    <div className="status-info">
+                      <div className="status-label-row">
+                        <h3>Stack Summary</h3>
+                        <span className="live-badge">HEALTH CHECK</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '1rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ef4444' }}>{data.summary.totalWasteCount}</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8' }}>WASTE</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b' }}>{data.summary.totalWarningCount}</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8' }}>WARNINGS</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981' }}>{data.summary.totalHealthyCount}</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8' }}>HEALTHY</div>
+                        </div>
                       </div>
                     </div>
-                    <div className="savings-tag">
-                      <span className="amount-val">{rec.savings}</span>
-                      <span className="label">EST. SAVINGS</span>
+                  </div>
+                  <div className="progress-section">
+                    <div className="progress-bar-container">
+                      <div className="progress-bar-fill" style={{width: `${(data.summary.totalHealthyCount / data.subscriptions.length) * 100}%`}}></div>
+                    </div>
+                    <div className="progress-meta">
+                      <span>STACK HEALTH: {Math.round((data.summary.totalHealthyCount / data.subscriptions.length) * 100)}%</span>
+                      <span>{data.subscriptions.length} APPS ANALYZED</span>
                     </div>
                   </div>
-                  <div className="reason-box">
-                    <p>{rec.reason}</p>
-                  </div>
-                  <div className="card-actions">
-                    <button className="btn-secondary">Review Details</button>
-                    <button className="btn-outline">Cancel Subscription</button>
-                  </div>
-                </div>
-              ))}
-
-              <div className="scan-more-card">
-                <div className="scan-icon-plus">
-                  <Plus size={24} />
-                </div>
-                <h3>Scan More Apps</h3>
-                <p>Connect your HRIS or ERP to uncover deeper license overlaps.</p>
-                <button className="add-integration-btn">Add Integration</button>
-                <div className="ai-monitor-badge">
-                   <div className="pulse-dot"></div>
-                   <span>AI is monitoring active sessions...</span>
                 </div>
               </div>
-            </div>
-          </div>
+
+              <div className="recommendations-section">
+                <div className="section-header">
+                  <CheckCircle2 size={20} color="#5c4df3" />
+                  <h2>Actionable Recommendations</h2>
+                </div>
+
+                <div className="recommendations-grid">
+                  {data.subscriptions.filter(s => s.status !== 'healthy').length > 0 ? (
+                    data.subscriptions.filter(s => s.status !== 'healthy').map((sub) => {
+                      const styles = getStatusStyles(sub.status);
+                      return (
+                        <div key={sub._id} className="recommendation-card" style={{ borderTop: `4px solid ${styles.color}` }}>
+                          <div className="card-top">
+                            <div className="app-info">
+                              <div className="app-icon" style={{ background: '#f1f5f9', color: 'var(--primary)' }}>
+                                <LayoutGrid size={18} />
+                              </div>
+                              <div>
+                                <h4>{sub.name}</h4>
+                                <span style={{ textTransform: 'capitalize' }}>{sub.category}</span>
+                              </div>
+                            </div>
+                            <div className="savings-tag">
+                              <span className="amount-val" style={{ color: styles.color }}>
+                                {sub.status === 'waste' ? `-$${sub.cost}` : 'Alert'}
+                              </span>
+                              <span className="label" style={{ background: styles.bg, color: styles.color, padding: '2px 6px', borderRadius: '4px', fontSize: '0.55rem', marginLeft: 'auto', display: 'block', width: 'fit-content', marginTop: '4px' }}>
+                                {styles.label}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="reason-box" style={{ borderLeftColor: styles.color, background: styles.bg }}>
+                            <p>
+                              {sub.status === 'waste' 
+                                ? `This service hasn't been used in over 14 days and is costing $${sub.cost}/mo. We recommend cancelling immediately.`
+                                : `Upcoming renewal on ${new Date(sub.renewalDate).toLocaleDateString()}. Review usage before the billing cycle restarts.`
+                              }
+                            </p>
+                          </div>
+                          <div className="card-actions">
+                            <Link to="/subscriptions" className="btn-secondary" style={{ textAlign: 'center', textDecoration: 'none' }}>Review List</Link>
+                            <button className="btn-outline" style={{ color: sub.status === 'waste' ? '#ef4444' : '#64748b' }}>
+                              {sub.status === 'waste' ? 'Cancel Service' : 'Manage Renewal'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                      <Info size={32} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+                      <p style={{ color: '#64748b' }}>No critical actions required at this time. All services are healthy!</p>
+                    </div>
+                  )}
+
+                  <div className="scan-more-card">
+                    <div className="scan-icon-plus">
+                      <Plus size={24} />
+                    </div>
+                    <h3>Connect More Apps</h3>
+                    <p>The more apps you connect, the better our AI can find overlaps.</p>
+                    <Link to="/subscriptions/add" className="add-integration-btn" style={{ textDecoration: 'none' }}>Add Integration</Link>
+                    <div className="ai-monitor-badge">
+                       <div className="pulse-dot"></div>
+                       <span>AI is monitoring active sessions...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </main>
 
       <style>{`
-        .sidebar-logo {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 2.5rem !important;
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
 
-        .logo-icon-container {
-          width: 40px;
-          height: 40px;
-          background: #5c4df3;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 4px 12px rgba(92, 77, 243, 0.3);
-        }
-
-        .sidebar-logo h2 {
-          font-size: 1.1rem !important;
-          margin-bottom: 0 !important;
-          line-height: 1.2;
-          color: #5c4df3 !important;
-        }
-
-        .sidebar-logo p {
-          font-size: 0.6rem !important;
-          margin-bottom: 0 !important;
-          opacity: 0.7;
-          color: #64748b !important;
-        }
-
-        .insights-content {
-          padding: 2rem;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .insights-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-
-        .title-section h1 {
-          font-size: 1.8rem;
-          font-weight: 700;
-          color: #1e293b;
-          margin-bottom: 0.25rem;
-        }
-
-        .title-section p {
-          color: #64748b;
-          font-size: 0.9rem;
-        }
-
-        .regenerate-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.6rem 1rem;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          background: white;
-          color: #5c4df3;
-          font-weight: 600;
-          font-size: 0.85rem;
-          cursor: pointer;
-        }
-
-        .insights-summary-grid {
-          display: grid;
-          grid-template-columns: 1fr 1.5fr;
-          gap: 1.5rem;
-          margin-bottom: 2.5rem;
-        }
-
-        .efficiency-card {
-          background: linear-gradient(135deg, #5c4df3 0%, #3b2bc4 100%);
-          border-radius: 16px;
-          padding: 2rem;
-          color: white;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          box-shadow: 0 10px 25px -5px rgba(92, 77, 243, 0.3);
-        }
-
-        .card-badge {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          background: rgba(255, 255, 255, 0.2);
-          padding: 0.4rem 0.8rem;
-          border-radius: 20px;
-          font-size: 0.7rem;
-          font-weight: 700;
-          width: fit-content;
-          margin-bottom: 1.5rem;
-        }
-
-        .savings-main p {
-          font-size: 0.95rem;
-          opacity: 0.9;
-          margin-bottom: 0.5rem;
-        }
-
-        .amount {
-          display: flex;
-          align-items: baseline;
-        }
-
-        .currency {
-          font-size: 2rem;
-          font-weight: 600;
-        }
-
-        .value {
-          font-size: 4rem;
-          font-weight: 700;
-          line-height: 1;
-        }
-
-        .decimals {
-          font-size: 1.5rem;
-          opacity: 0.7;
-        }
-
-        .card-footer-text {
-          margin-top: 2rem;
-          font-size: 0.85rem;
-          line-height: 1.5;
-          opacity: 0.9;
-        }
-
-        .status-card {
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 2rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-        }
-
-        .status-header {
-          display: flex;
-          gap: 1.5rem;
-        }
-
-        .status-icon-bg {
-          width: 56px;
-          height: 56px;
-          background: #f0efff;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .status-label-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 0.5rem;
-          width: 100%;
-        }
-
-        .live-badge {
-          font-size: 0.65rem;
-          font-weight: 800;
-          color: #10b981;
-          background: #ecfdf5;
-          padding: 0.25rem 0.6rem;
-          border-radius: 4px;
-        }
-
-        .status-info {
-          flex-grow: 1;
-        }
-
-        .status-info p {
-          font-size: 0.9rem;
-          color: #64748b;
-          line-height: 1.6;
-        }
-
-        .highlight {
-          color: #10b981;
-          font-weight: 700;
-        }
-
-        .progress-section {
-          margin-top: 2rem;
-        }
-
-        .progress-bar-container {
-          height: 8px;
-          background: #f1f5f9;
-          border-radius: 4px;
-          overflow: hidden;
-          margin-bottom: 0.75rem;
-        }
-
-        .progress-bar-fill {
-          height: 100%;
-          background: #5c4df3;
-          border-radius: 4px;
-        }
-
-        .progress-meta {
-          display: flex;
-          justify-content: space-between;
-          font-size: 0.65rem;
-          font-weight: 700;
-          color: #94a3b8;
-        }
-
-        .recommendations-section {
-          margin-top: 3rem;
-        }
-
-        .section-header {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .section-header h2 {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: #1e293b;
-        }
-
-        .recommendations-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .recommendation-card {
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .card-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 1.5rem;
-        }
-
-        .app-info {
-          display: flex;
-          gap: 0.75rem;
-          align-items: center;
-        }
-
-        .app-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .figma-bg { background: #1e1e1e; }
-        .slack-bg { background: #4a154b; }
-        .zoom-bg { background: #2d8cff; }
-
-        .app-info h4 {
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #1e293b;
-          margin: 0;
-        }
-
-        .app-info span {
-          font-size: 0.8rem;
-          color: #94a3b8;
-        }
-
-        .savings-tag {
-          text-align: right;
-        }
-
-        .amount-val {
-          display: block;
-          color: #5c4df3;
-          font-weight: 700;
-          font-size: 1.1rem;
-        }
-
-        .savings-tag .label {
-          font-size: 0.6rem;
-          font-weight: 700;
-          color: #94a3b8;
-        }
-
-        .reason-box {
-          background: #f8fafc;
-          border-left: 3px solid #5c4df3;
-          padding: 1rem;
-          border-radius: 4px;
-          margin-bottom: 1.5rem;
-          flex-grow: 1;
-        }
-
-        .reason-box p {
-          font-size: 0.85rem;
-          color: #475569;
-          font-style: italic;
-          line-height: 1.5;
-          margin: 0;
-        }
-
-        .card-actions {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.75rem;
-        }
-
-        .btn-secondary {
-          background: #eff6ff;
-          color: #3b82f6;
-          border: none;
-          padding: 0.6rem;
-          border-radius: 8px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .btn-outline {
-          background: transparent;
-          color: #94a3b8;
-          border: 1px solid #e2e8f0;
-          padding: 0.6rem;
-          border-radius: 8px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .scan-more-card {
-          background: white;
-          border: 1px dashed #cbd5e1;
-          border-radius: 16px;
-          padding: 2rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          justify-content: center;
-          position: relative;
-          min-height: 250px;
-        }
-
-        .scan-icon-plus {
-          width: 48px;
-          height: 48px;
-          background: #f8fafc;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #94a3b8;
-          margin-bottom: 1rem;
-        }
-
-        .scan-more-card h3 {
-          font-size: 1rem;
-          font-weight: 700;
-          color: #64748b;
-          margin-bottom: 0.5rem;
-        }
-
-        .scan-more-card p {
-          font-size: 0.85rem;
-          color: #94a3b8;
-          margin-bottom: 1.5rem;
-        }
-
-        .add-integration-btn {
-          color: #5c4df3;
-          background: transparent;
-          border: none;
-          font-weight: 700;
-          font-size: 0.85rem;
-          cursor: pointer;
-        }
-
-        .ai-monitor-badge {
-          position: absolute;
-          bottom: 1rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: white;
-          padding: 0.4rem 1rem;
-          border-radius: 20px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-          border: 1px solid #f1f5f9;
-        }
-
-        .pulse-dot {
-          width: 6px;
-          height: 6px;
-          background: #5c4df3;
-          border-radius: 50%;
-        }
-
-        .ai-monitor-badge span {
-          font-size: 0.75rem;
-          color: #64748b;
-          font-weight: 500;
-        }
+        .insights-content { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .insights-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .title-section h1 { font-size: 1.8rem; font-weight: 700; color: #1e293b; margin-bottom: 0.25rem; }
+        .title-section p { color: #64748b; font-size: 0.9rem; }
+        .regenerate-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; color: #5c4df3; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .insights-summary-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem; margin-bottom: 2.5rem; }
+        .efficiency-card { background: linear-gradient(135deg, #5c4df3 0%, #3b2bc4 100%); border-radius: 16px; padding: 2rem; color: white; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 25px -5px rgba(92, 77, 243, 0.3); }
+        .card-badge { display: flex; align-items: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.2); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; width: fit-content; margin-bottom: 1.5rem; }
+        .savings-main p { font-size: 0.95rem; opacity: 0.9; margin-bottom: 0.5rem; }
+        .amount { display: flex; align-items: baseline; }
+        .currency { font-size: 2rem; font-weight: 600; }
+        .value { font-size: 4rem; font-weight: 700; line-height: 1; }
+        .decimals { font-size: 1.5rem; opacity: 0.7; }
+        .card-footer-text { margin-top: 2rem; font-size: 0.85rem; line-height: 1.5; opacity: 0.9; }
+        .status-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; }
+        .status-header { display: flex; gap: 1.5rem; }
+        .status-icon-bg { width: 56px; height: 56px; background: #f0efff; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .status-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; width: 100%; }
+        .live-badge { font-size: 0.65rem; font-weight: 800; color: #10b981; background: #ecfdf5; padding: 0.25rem 0.6rem; border-radius: 4px; }
+        .status-info { flex-grow: 1; }
+        .progress-section { margin-top: 2rem; }
+        .progress-bar-container { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 0.75rem; }
+        .progress-bar-fill { height: 100%; background: #5c4df3; border-radius: 4px; transition: width 0.5s ease; }
+        .progress-meta { display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 700; color: #94a3b8; }
+        .recommendations-section { margin-top: 3rem; }
+        .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+        .section-header h2 { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .recommendations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+        .recommendation-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; }
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+        .app-info { display: flex; gap: 0.75rem; align-items: center; }
+        .app-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .app-info h4 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0; }
+        .app-info span { font-size: 0.8rem; color: #94a3b8; }
+        .savings-tag { text-align: right; }
+        .amount-val { display: block; font-weight: 700; font-size: 1.1rem; }
+        .savings-tag .label { font-size: 0.6rem; font-weight: 700; }
+        .reason-box { border-left: 3px solid #5c4df3; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; flex-grow: 1; }
+        .reason-box p { font-size: 0.85rem; color: #475569; font-style: italic; line-height: 1.5; margin: 0; }
+        .card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .btn-secondary { background: #eff6ff; color: #3b82f6; border: none; padding: 0.6rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .btn-outline { background: transparent; color: #94a3b8; border: 1px solid #e2e8f0; padding: 0.6rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .scan-more-card { background: white; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; position: relative; min-height: 250px; }
+        .scan-icon-plus { width: 48px; height: 48px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #94a3b8; margin-bottom: 1rem; }
+        .scan-more-card h3 { font-size: 1rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
+        .scan-more-card p { font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.5rem; }
+        .add-integration-btn { color: #5c4df3; background: transparent; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+        .ai-monitor-badge { position: absolute; bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; background: white; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+        .pulse-dot { width: 6px; height: 6px; background: #5c4df3; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(92, 77, 243, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(92, 77, 243, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(92, 77, 243, 0); } }
       `}</style>
     </div>
   );
