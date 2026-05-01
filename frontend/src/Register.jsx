@@ -52,6 +52,7 @@ function Register() {
       if (response.data && response.data.token) {
         // Automatically log the user in
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         navigate('/dashboard');
       } else {
         // Fallback: redirect to login if no token returned

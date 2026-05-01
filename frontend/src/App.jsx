@@ -57,6 +57,14 @@ function App() {
           } 
         />
         <Route 
+          path="/subscriptions/edit/:id" 
+          element={
+            <ProtectedRoute>
+              <AddSubscription />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/insights" 
           element={
             <ProtectedRoute>

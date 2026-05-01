@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getSubscriptions,
   createSubscription,
+  getSubscription,
   updateSubscription,
   deleteSubscription
 } from '../controllers/subscriptionController.js';
@@ -19,6 +20,7 @@ router
 
 router
   .route('/:id')
+  .get(getSubscription)
   .put(updateSubscription)
   .delete(deleteSubscription);
 
