@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link } from 'react-router-dom';
 import api from './api';
 import { 
@@ -47,6 +48,10 @@ function Login() {
 
   return (
     <div className="app-container">
+      <Helmet>
+        <title>Login | SubOptima</title>
+        <meta name="description" content="Sign in to your SubOptima account to manage your SaaS stack, optimize software spend, and automate your subscriptions." />
+      </Helmet>
       {/* Left Panel */}
       <section className="left-panel">
         <div className="left-content">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import Subscriptions from './Subscriptions';
 import { X, Upload, ChevronDown, ArrowRight, Loader2, Save } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -103,6 +104,10 @@ const AddSubscription = () => {
       
       {/* Modal Overlay */}
       <div className="modal-overlay">
+        <Helmet>
+          <title>{id ? 'Edit Subscription' : 'Add Subscription'} | SubOptima</title>
+          <meta name="description" content={id ? 'Update the details of your active software subscription.' : 'Add a new software subscription to your SubOptima tracking dashboard.'} />
+        </Helmet>
         <div className="modal-content">
           <button className="close-modal" onClick={handleClose} aria-label="Close">
             <X size={18} />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import insightService from './services/insightService';
 import aiService from './services/aiService';
@@ -94,6 +95,10 @@ const Insights = () => {
 
   return (
     <div className="dashboard-container">
+      <Helmet>
+        <title>AI Insights & Savings | SubOptima</title>
+        <meta name="description" content="Get actionable AI insights on your SaaS spending. SubOptima's engine identifies waste, highlights optimization opportunities, and suggests alternative software." />
+      </Helmet>
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">

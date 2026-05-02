@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import subscriptionService from './services/subscriptionService';
 import { 
@@ -134,6 +135,10 @@ const Subscriptions = () => {
 
   return (
     <div className="dashboard-container">
+      <Helmet>
+        <title>All Subscriptions | SubOptima</title>
+        <meta name="description" content="Manage all your software subscriptions in one place. View costs, categories, renewal dates, and status of your active and inactive SaaS tools." />
+      </Helmet>
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">

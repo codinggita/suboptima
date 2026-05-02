@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -80,6 +81,10 @@ const Settings = () => {
   };
   return (
     <div className="dashboard-container">
+      <Helmet>
+        <title>Account Settings | SubOptima</title>
+        <meta name="description" content="Manage your SubOptima account preferences, update your profile, configure billing details, and adjust your theme settings." />
+      </Helmet>
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">

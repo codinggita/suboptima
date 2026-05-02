@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import dashboardService from './services/dashboardService';
 import { 
@@ -56,6 +57,10 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      <Helmet>
+        <title>Dashboard | SubOptima</title>
+        <meta name="description" content="View your comprehensive SaaS spending dashboard. Track active subscriptions, monitor monthly costs, and find AI-powered optimization opportunities." />
+      </Helmet>
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">
