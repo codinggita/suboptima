@@ -26,6 +26,37 @@ It provides a centralized platform to:
 
 ---
 
+## Live demo:
+
+   https://suboptima.vercel.app/
+
+---
+
+## 🎨 Figma Design
+
+*Figma Link:* https://www.figma.com/design/ybGQ0oFi8ljSuHg6fmWO2J/Untitled?node-id=185-560&t=izSAbMr8QuBZXXl6-1
+
+---
+
+## Postman Documentation 
+
+*Postman documentation:* https://documenter.getpostman.com/view/50840757/2sBXqKoL4B
+
+---
+
+## Backend Deployed link:
+
+https://suboptima.onrender.com
+
+---
+
+## Youtube demo link:
+
+*Youtube demo link:* https://youtu.be/n--7LQrb18Y?si=by80A00Cxe7yfyIR
+
+---
+
+
 ## 🎯 Problem Statement
 
 Users often subscribe to multiple SaaS tools but lack:
@@ -166,17 +197,9 @@ AI integration provides:
 
 ---
 
-## Live demo:
 
-https://suboptima.vercel.app/
 
----
 
-## 🎨 Figma Design
-
-*Figma Link:* https://www.figma.com/design/ybGQ0oFi8ljSuHg6fmWO2J/Untitled?node-id=185-560&t=izSAbMr8QuBZXXl6-1
-
----
 
 ## 👨‍💻 Author
 
